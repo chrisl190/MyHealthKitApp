@@ -36,7 +36,7 @@ const HealthCard: React.FC<HealthCardProps> = ({ title, value, unit, time, iconN
       <View style={styles.titleContainer}>
         <View style={styles.iconTitleContainer}>
           {iconName && (
-            <Ionicons name={iconName} size={20} color={colours.orange} style={styles.icon} />
+            <Ionicons name={iconName} size={20} color={colours.blue} style={styles.icon} />
           )}
           <Text style={styles.cardTitle}>{title}</Text>
         </View>
@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
     padding: spacing.paddingMedium,
     borderRadius: 12,
     marginBottom: spacing.marginMedium,
-    shadowColor: colours.shadowColor,
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 5 },
     shadowRadius: 10,

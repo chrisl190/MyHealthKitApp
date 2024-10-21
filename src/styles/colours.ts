@@ -1,11 +1,11 @@
 const colours = {
-    background: '#000',
-    cardBackground: '#1C1C1E',
-    orange: '#FF7F50',
-    textWhite: '#fff',
-    textGray: '#A1A1A1',
-    shadowColor: '#000',
-  };
-  
-  export default colours;
-  
+  background: '#FFFFFF',
+  cardBackground: '#F8F8F8',
+  blue: '#68b1bf',
+  textBlack: '#000',
+  textGray: '#5D5D5D',
+  textRed: '#D64958',
+  errorBackground: '#FDECEA',
+};
+
+export default colours;

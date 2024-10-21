@@ -1,24 +1,21 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { Authenticator, ThemeProvider } from '@aws-amplify/ui-react-native';
+import { Amplify } from 'aws-amplify';
+import awsmobile from './src/aws-exports';
 import HealthKit from './src/components/healthkit/HealthKit';
-import colours from './src/styles/colours';
 
-const App: React.FC = () => {
+Amplify.configure(awsmobile);
+
+function App() {
   return (
-    <>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <SafeAreaView style={styles.container}>
-        <HealthKit />
-      </SafeAreaView>
-    </>
+    <ThemeProvider>
+      <Authenticator.Provider>
+        <Authenticator>
+          <HealthKit />
+        </Authenticator>
+      </Authenticator.Provider>
+    </ThemeProvider>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colours.background,
-  },
-});
+}
 
 export default App;

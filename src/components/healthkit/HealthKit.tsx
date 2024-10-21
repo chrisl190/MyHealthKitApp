@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, StatusBar, RefreshControl, Alert } from 'react-native';
+import { ScrollView, StyleSheet, StatusBar, RefreshControl, Alert, Text, TouchableOpacity } from 'react-native';
 import HealthCard from './HealthCard';
 import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
 import { useSteps } from '../../hooks/useSteps';
@@ -9,6 +9,8 @@ import { useHeartRate } from '../../hooks/useHeartRate';
 import { useFlights } from '../../hooks/useFlights';
 import colours from '../../styles/colours';
 import spacing from '../../styles/spacing';
+import { useAuthenticator } from '@aws-amplify/ui-react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const permissions: HealthKitPermissions = {
     permissions: {
@@ -23,6 +25,7 @@ const HealthKit: React.FC = () => {
     const [sleep, fetchSleep] = useSleep();
     const [heartRate, fetchHeartRate] = useHeartRate();
     const [flights, fetchFlights] = useFlights();
+    const { user, signOut } = useAuthenticator();
 
     const requestPermissions = async () => {
         return new Promise((resolve, reject) => {
@@ -84,10 +87,12 @@ const HealthKit: React.FC = () => {
                     <RefreshControl
                         refreshing={isRefreshing}
                         onRefresh={handleRefresh}
-                        tintColor={colours.orange}
+                        tintColor={colours.blue}
                     />
                 }
             >
+                <Text style={styles.greeting}>Hello,</Text>
+                <Text style={styles.greetingSub}>{user?.signInDetails?.loginId || 'User'}</Text>
                 <HealthCard
                     title="Steps"
                     value={steps ? formatNumberWithCommas(steps) : 'No Data'}
@@ -122,6 +127,9 @@ const HealthKit: React.FC = () => {
                     time={getCurrentTime()}
                     iconName="barbell-outline"
                 />
+                <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
+                    <Text style={styles.signOutButtonText}>Sign out</Text>
+                </TouchableOpacity>
             </ScrollView>
         </>
     );
@@ -133,6 +141,32 @@ const styles = StyleSheet.create({
         backgroundColor: colours.background,
         paddingVertical: spacing.paddingLarge,
         paddingHorizontal: spacing.paddingMedium,
+    },
+    greeting: {
+        fontSize: 24,
+        marginBottom: 5,
+        marginTop: 5,
+        fontWeight: 'bold',
+        color: Colors.black,
+    },
+    greetingSub: {
+        fontSize: 16,
+        marginBottom: 20,
+        fontWeight: 'bold',
+        color: Colors.black,
+    },
+    signOutButton: {
+        marginTop: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: colours.blue,
+        borderRadius: 5,
+    },
+    signOutButtonText: {
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center'
     },
 });
 
