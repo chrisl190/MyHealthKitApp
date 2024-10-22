@@ -8,7 +8,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 interface HealthCardProps {
   title: string;
   value: string | number;
-  unit?: string; 
+  unit?: string;
   time: string;
   iconName?: string;
 }

@@ -16,6 +16,7 @@ export const useHeartRate = () => {
 
             AppleHealthKit.getHeartRateSamples(options, (err: Object, results: any[]) => {
                 if (err) {
+                    console.error('Error fetching heart rate data:', err); 
                     setHeartRate(null);
                     return;
                 }
@@ -23,7 +24,6 @@ export const useHeartRate = () => {
                 if (results && results.length > 0) {
                     const latestHeartRate = Math.round(results[0].value);
                     setHeartRate(latestHeartRate);
-                    console.log(`Fetched Heart Rate: ${latestHeartRate} bpm`);
                 } else {
                     setHeartRate(null);
                 }

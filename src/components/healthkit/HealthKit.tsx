@@ -1,66 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, StatusBar, RefreshControl, Alert, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, StatusBar, RefreshControl, Text, TouchableOpacity, Alert } from 'react-native';
 import HealthCard from './HealthCard';
-import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
-import { useSteps } from '../../hooks/useSteps';
-import { useDistance } from '../../hooks/useDistance';
-import { useSleep } from '../../hooks/useSleep';
-import { useHeartRate } from '../../hooks/useHeartRate';
-import { useFlights } from '../../hooks/useFlights';
+import { useHealthData } from '../../hooks/useHealthData';
+import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import colours from '../../styles/colours';
 import spacing from '../../styles/spacing';
-import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-
-const permissions: HealthKitPermissions = {
-    permissions: {
-        read: ['StepCount', 'DistanceWalkingRunning', 'HeartRate', 'FlightsClimbed', 'ActiveEnergyBurned', 'SleepAnalysis'],
-    },
-};
+import { updateHealthData } from '../../api/healthApi';
 
 const HealthKit: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [steps, fetchSteps] = useSteps();
-    const [distance, fetchDistance] = useDistance();
-    const [sleep, fetchSleep] = useSleep();
-    const [heartRate, fetchHeartRate] = useHeartRate();
-    const [flights, fetchFlights] = useFlights();
+    const { healthData, isLoading, error, fetchHealthData } = useHealthData();
     const { user, signOut } = useAuthenticator();
 
-    const requestPermissions = async () => {
-        return new Promise((resolve, reject) => {
-            AppleHealthKit.initHealthKit(permissions, (error: string) => {
-                if (error) {
-                    Alert.alert(
-                        'Permission Denied',
-                        'HealthKit permissions were not granted. Please enable them in your device settings.',
-                        [{ text: 'OK' }]
-                    );
-                    reject(error);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
+    const handleSaveHealthData = async () => {
+        const userId = user.userId;
+
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+
+        const todayHealthData = {
+            userId,
+            date: formattedDate,
+            steps: healthData.steps,
+            distance: healthData.distance,
+            sleep: healthData.sleep,
+            heartRate: healthData.heartRate,
+            flights: healthData.flights,
+        };
+
+        console.log('Health data to be saved or updated:', JSON.stringify(todayHealthData));
+
+        try {
+            const response = await updateHealthData(userId, todayHealthData);
+            console.log('Health data saved or updated successfully:', response);
+        } catch (error) {
+            console.error('Failed to save or update health data:', error);
+            Alert.alert('Error', 'Failed to save or update health data');
+        }
     };
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            await requestPermissions();
-
-            await Promise.all([
-                fetchSteps(),
-                fetchDistance(),
-                fetchSleep(),
-                fetchHeartRate(),
-                fetchFlights(),
-            ]);
+            await fetchHealthData();
+            await handleSaveHealthData();
         } catch (error) {
-            console.error('Error fetching data on refresh:', error);
+            console.error('Error during refresh:', error);
+            Alert.alert('Error', 'Failed to refresh health data');
         } finally {
             setIsRefreshing(false);
         }
+    };
+
+    const formatNumberWithCommas = (number: number) => {
+        return number ? number.toLocaleString() : 'No Data';
     };
 
     const getCurrentTime = () => {
@@ -70,13 +64,13 @@ const HealthKit: React.FC = () => {
         return `${hours}:${minutes}`;
     };
 
-    const formatNumberWithCommas = (number: number) => {
-        return number.toLocaleString();
-    };
+    if (isLoading) {
+        return <Text>Loading...</Text>;
+    }
 
-    useEffect(() => {
-        handleRefresh();
-    }, []);
+    if (error) {
+        return <Text>Error: {error}</Text>;
+    }
 
     return (
         <>
@@ -95,38 +89,41 @@ const HealthKit: React.FC = () => {
                 <Text style={styles.greetingSub}>{user?.signInDetails?.loginId || 'User'}</Text>
                 <HealthCard
                     title="Steps"
-                    value={steps ? formatNumberWithCommas(steps) : 'No Data'}
+                    value={formatNumberWithCommas(healthData.steps)}
                     unit="steps"
                     time={getCurrentTime()}
                     iconName="walk-outline"
                 />
                 <HealthCard
                     title="Walking + Running Distance"
-                    value={distance ? distance.toFixed(2) : 'No Data'}
+                    value={healthData.distance ? healthData.distance.toFixed(2) : 'No Data'}
                     unit="km"
                     time={getCurrentTime()}
                     iconName="footsteps-outline"
                 />
+
                 <HealthCard
                     title="Heart Rate"
-                    value={heartRate ? heartRate.toFixed(2) : 'No Data'}
+                    value={healthData.heartRate ? healthData.heartRate.toFixed(2) : 'No Data'}
                     unit="bpm"
                     time={getCurrentTime()}
                     iconName="heart-outline"
                 />
                 <HealthCard
                     title="Sleep"
-                    value={sleep ? sleep : 'No Data'}
-                    unit=""
+                    value={healthData.sleep || 'No Data'}
                     time={getCurrentTime()}
                     iconName="bed-outline"
+
                 />
                 <HealthCard
                     title="Flights Climbed"
-                    value={flights ? flights : 'No Data'}
+                    value={formatNumberWithCommas(healthData.flights)}
                     time={getCurrentTime()}
                     iconName="barbell-outline"
+
                 />
+
                 <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
                     <Text style={styles.signOutButtonText}>Sign out</Text>
                 </TouchableOpacity>
@@ -166,7 +163,7 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 18,
         fontWeight: 'bold',
-        textAlign: 'center'
+        textAlign: 'center',
     },
 });
 

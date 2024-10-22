@@ -18,7 +18,6 @@ export const useFlights = () => {
 
                 if (result && typeof result.value === 'number') {
                     setFlights(result.value);
-                    console.log(`Fetched Flights Climbed: ${result.value}`);
                 } else {
                     setFlights(null);
                 }

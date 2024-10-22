@@ -15,13 +15,13 @@ export const useSleep = () => {
 
             AppleHealthKit.getSleepSamples(options, (err: Object, results: any[]) => {
                 if (err) {
+                    console.error('Error fetching sleep data:', err);s
                     setSleep('No Data');
                     return;
                 }
 
                 if (results && results.length > 0) {
                     const inBedSamples = results.filter(sample => sample.value === 'INBED');
-
                     if (inBedSamples.length > 0) {
                         const lastInBedSample = inBedSamples[inBedSamples.length - 1];
                         const sleepStart = new Date(lastInBedSample.startDate);
@@ -33,7 +33,6 @@ export const useSleep = () => {
 
                         const sleepDuration = `${hours} hr ${minutes} min`;
                         setSleep(sleepDuration);
-                        console.log(`Fetched Sleep: ${sleepDuration}`);
                     } else {
                         setSleep('No Data');
                     }

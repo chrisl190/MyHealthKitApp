@@ -67,6 +67,7 @@ yarn-error.log
 
 # Environment
 .env*
+/backend/.env
 !.env.sample
 
 #amplify-do-not-edit-begin
