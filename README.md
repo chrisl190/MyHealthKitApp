@@ -1,2 +1,2 @@
 # MyHealthKitApp
-A React Native app showcasing Apple HealthKit integration. 
+This React Native app is built with TypeScript and integrates with Apple HealthKit to track user health data. The app connects to AWS for user authentication and securely stores health metrics (steps, sleep, heart rate, etc.) in a MongoDB database. Users can view their recent health data, and the backend (written in Express.js and Node.js) allows retrieval of the last 5 days' health figures. It supports seamless communication between the mobile app and the server, ensuring health data is updated and accessible.

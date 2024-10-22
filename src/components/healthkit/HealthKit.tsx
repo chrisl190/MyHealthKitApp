@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, StatusBar, RefreshControl, Text, TouchableOpacity, Alert } from 'react-native';
 import HealthCard from './HealthCard';
 import { useHealthData } from '../../hooks/useHealthData';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import colours from '../../styles/colours';
 import spacing from '../../styles/spacing';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { updateHealthData } from '../../api/healthApi';
+import { updateHealthData, fetchWeeklyData, deleteHealthData } from '../../api/healthApi'; 
+import HealthHistory from './HealthHistory';
 
 const HealthKit: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [weeklyData, setWeeklyData] = useState(null);
     const { healthData, isLoading, error, fetchHealthData } = useHealthData();
     const { user, signOut } = useAuthenticator();
 
@@ -53,7 +54,34 @@ const HealthKit: React.FC = () => {
         }
     };
 
-    const formatNumberWithCommas = (number: number) => {
+    const handleFetchMetricData = async (metric) => {
+        const userId = user.userId;
+        try {
+            const data = await fetchWeeklyData(userId);
+            const filteredData = data.map(entry => ({
+                date: entry.date,
+                value: entry[metric],
+            })).slice(0, 5);
+            setWeeklyData({ metric, data: filteredData });
+        } catch (error) {
+            console.error(`Error fetching ${metric} data:`, error);
+            Alert.alert('Error', `Failed to fetch ${metric} data`);
+        }
+    };
+
+    const handleDeleteHealthData = async (date) => {
+        const userId = user.userId;
+        try {
+            await deleteHealthData(userId, date);
+            Alert.alert('Success', `Health data for ${date} deleted successfully`);
+            await handleFetchMetricData(weeklyData.metric);
+        } catch (error) {
+            console.error('Failed to delete health data:', error);
+            Alert.alert('Error', `Failed to delete health data for ${date}`);
+        }
+    };
+
+    const formatNumberWithCommas = (number) => {
         return number ? number.toLocaleString() : 'No Data';
     };
 
@@ -87,42 +115,57 @@ const HealthKit: React.FC = () => {
             >
                 <Text style={styles.greeting}>Hello,</Text>
                 <Text style={styles.greetingSub}>{user?.signInDetails?.loginId || 'User'}</Text>
+
                 <HealthCard
                     title="Steps"
                     value={formatNumberWithCommas(healthData.steps)}
                     unit="steps"
                     time={getCurrentTime()}
                     iconName="walk-outline"
+                    onPress={() => handleFetchMetricData('steps')}
                 />
+                
                 <HealthCard
                     title="Walking + Running Distance"
                     value={healthData.distance ? healthData.distance.toFixed(2) : 'No Data'}
                     unit="km"
                     time={getCurrentTime()}
                     iconName="footsteps-outline"
+                    onPress={() => handleFetchMetricData('distance')}
                 />
-
+                
                 <HealthCard
                     title="Heart Rate"
                     value={healthData.heartRate ? healthData.heartRate.toFixed(2) : 'No Data'}
                     unit="bpm"
                     time={getCurrentTime()}
                     iconName="heart-outline"
+                    onPress={() => handleFetchMetricData('heartRate')}
                 />
+                
                 <HealthCard
                     title="Sleep"
                     value={healthData.sleep || 'No Data'}
                     time={getCurrentTime()}
                     iconName="bed-outline"
-
+                    onPress={() => handleFetchMetricData('sleep')}
                 />
+                
                 <HealthCard
                     title="Flights Climbed"
                     value={formatNumberWithCommas(healthData.flights)}
                     time={getCurrentTime()}
                     iconName="barbell-outline"
-
+                    onPress={() => handleFetchMetricData('flights')}
                 />
+
+                {weeklyData && (
+                    <HealthHistory
+                        metric={weeklyData.metric}
+                        data={weeklyData.data}
+                        onDelete={handleDeleteHealthData}
+                    />
+                )}
 
                 <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
                     <Text style={styles.signOutButtonText}>Sign out</Text>
@@ -144,13 +187,13 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginTop: 5,
         fontWeight: 'bold',
-        color: Colors.black,
+        color: colours.black,
     },
     greetingSub: {
         fontSize: 16,
         marginBottom: 20,
         fontWeight: 'bold',
-        color: Colors.black,
+        color: colours.black,
     },
     signOutButton: {
         marginTop: 20,

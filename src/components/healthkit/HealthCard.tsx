@@ -11,9 +11,10 @@ interface HealthCardProps {
   unit?: string;
   time: string;
   iconName?: string;
+  onPress?: () => void;
 }
 
-const HealthCard: React.FC<HealthCardProps> = ({ title, value, unit, time, iconName }) => {
+const HealthCard: React.FC<HealthCardProps> = ({ title, value, unit, time, iconName, onPress }) => {
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
@@ -32,7 +33,7 @@ const HealthCard: React.FC<HealthCardProps> = ({ title, value, unit, time, iconN
   }, [value]);
 
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.card}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.card} onPress={onPress}>
       <View style={styles.titleContainer}>
         <View style={styles.iconTitleContainer}>
           {iconName && (
